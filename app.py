@@ -1,12 +1,3 @@
-That error means none of the model names in the fallback list matched what your specific API key was authorized to access or what is currently active on your account tier.
-
-To fix this instantly and make it work universally across any Google AI Studio key, update your model fallback list to include the current standard model identifiers (`gemini-3.8-flash`, `gemini-3.6-flash`, `gemini-2.5-flash`, and `gemini-2.0-flash`).
-
-### Updated Complete `app.py` Code
-
-Replace your code with this fully updated version, which includes the expanded fallback array:
-
-```python
 import streamlit as st
 import pandas as pd
 from google import genai
