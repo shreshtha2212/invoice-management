@@ -226,5 +226,3 @@ if st.session_state["extracted_records"]:
 
 elif not uploaded_files and not api_key:
     st.warning("👈 Please enter your Gemini API key in the sidebar and upload invoices to begin.")
-
-```
