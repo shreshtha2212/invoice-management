@@ -1,3 +1,12 @@
+That error means none of the model names in the fallback list matched what your specific API key was authorized to access or what is currently active on your account tier.
+
+To fix this instantly and make it work universally across any Google AI Studio key, update your model fallback list to include the current standard model identifiers (`gemini-3.8-flash`, `gemini-3.6-flash`, `gemini-2.5-flash`, and `gemini-2.0-flash`).
+
+### Updated Complete `app.py` Code
+
+Replace your code with this fully updated version, which includes the expanded fallback array:
+
+```python
 import streamlit as st
 import pandas as pd
 from google import genai
@@ -59,8 +68,15 @@ if uploaded_files and api_key:
                 file_bytes = uploaded_file.read()
                 
                 try:
-                    # Fallback loop to support any user API key version or tier restriction
-                    models_to_try = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-1.5-flash"]
+                    # Comprehensive fallback list across all current Gemini flash identifiers
+                    models_to_try = [
+                        "gemini-flash-latest",
+                        "gemini-3.8-flash",
+                        "gemini-3.6-flash",
+                        "gemini-2.5-flash",
+                        "gemini-2.0-flash",
+                        "gemini-1.5-flash"
+                    ]
                     response = None
                     model_success = False
                     
@@ -83,7 +99,7 @@ if uploaded_files and api_key:
                             continue
                             
                     if not model_success or not response:
-                        raise Exception("All model fallback attempts failed for this API key.")
+                        raise Exception("All model fallback attempts failed for this API key. Ensure your API key is valid and has model access.")
                     
                     parsed = InvoiceSchema.model_validate_json(response.text)
                     data_dict = parsed.model_dump()
@@ -210,3 +226,5 @@ if st.session_state["extracted_records"]:
 
 elif not uploaded_files and not api_key:
     st.warning("👈 Please enter your Gemini API key in the sidebar and upload invoices to begin.")
+
+```
