@@ -59,7 +59,6 @@ if uploaded_files and api_key:
                 file_bytes = uploaded_file.read()
                 
                 try:
-                    # Comprehensive fallback list across all current Gemini flash identifiers
                     models_to_try = [
                         "gemini-flash-latest",
                         "gemini-3.8-flash",
@@ -70,6 +69,7 @@ if uploaded_files and api_key:
                     ]
                     response = None
                     model_success = False
+                    error_logs = []
                     
                     for model_name in models_to_try:
                         try:
@@ -86,20 +86,25 @@ if uploaded_files and api_key:
                             )
                             model_success = True
                             break
-                        except Exception:
+                        except Exception as model_err:
+                            error_logs.append(f"{model_name} -> {model_err}")
                             continue
                             
                     if not model_success or not response:
-                        raise Exception("All model fallback attempts failed for this API key. Ensure your API key is valid and has model access.")
+                        st.error(f"❌ API Error on {uploaded_file.name}:")
+                        for err in error_logs:
+                            st.code(err)
+                        raise Exception("All model fallback attempts failed.")
                     
                     parsed = InvoiceSchema.model_validate_json(response.text)
                     data_dict = parsed.model_dump()
                     data_dict["source_file"] = uploaded_file.name
-                    data_dict["file_bytes"] = file_bytes  # Stored for side-by-side preview
+                    data_dict["file_bytes"] = file_bytes
                     records.append(data_dict)
                     
                 except Exception as e:
-                    st.error(f"Error processing {uploaded_file.name}: {e}")
+                    st.error(f"Processing halted for {uploaded_file.name}: {e}")
+
                 
                 progress_bar.progress((i + 1) / total_files)
                 
