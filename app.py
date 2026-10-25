@@ -59,17 +59,31 @@ if uploaded_files and api_key:
                 file_bytes = uploaded_file.read()
                 
                 try:
-                    response = client.models.generate_content(
-                        model='gemini-2.5-flash',
-                        contents=[
-                            types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
-                            "Extract comprehensive invoice details from this document, including GSTINs, tax breakdowns, HSN codes, and dates."
-                        ],
-                        config=types.GenerateContentConfig(
-                            response_mime_type="application/json",
-                            response_schema=InvoiceSchema,
-                        ),
-                    )
+                    # Fallback loop to support any user API key version or tier restriction
+                    models_to_try = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-1.5-flash"]
+                    response = None
+                    model_success = False
+                    
+                    for model_name in models_to_try:
+                        try:
+                            response = client.models.generate_content(
+                                model=model_name,
+                                contents=[
+                                    types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
+                                    "Extract comprehensive invoice details from this document, including GSTINs, tax breakdowns, HSN codes, and dates."
+                                ],
+                                config=types.GenerateContentConfig(
+                                    response_mime_type="application/json",
+                                    response_schema=InvoiceSchema,
+                                ),
+                            )
+                            model_success = True
+                            break
+                        except Exception:
+                            continue
+                            
+                    if not model_success or not response:
+                        raise Exception("All model fallback attempts failed for this API key.")
                     
                     parsed = InvoiceSchema.model_validate_json(response.text)
                     data_dict = parsed.model_dump()
@@ -148,7 +162,7 @@ if st.session_state["extracted_records"]:
             with col_t2:
                 updated_grand = st.number_input("Grand Total", value=float(selected_record.get("total_amount") or 0.0))
                 
-            col_s1, col_s2, col_s3 = st.cols(3) if hasattr(st, 'cols') else st.columns(3)
+            col_s1, col_s2, col_s3 = st.columns(3)
             with col_s1:
                 updated_cgst = st.number_input("CGST", value=float(selected_record.get("cgst_amount") or 0.0))
             with col_s2:
