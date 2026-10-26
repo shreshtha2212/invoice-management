@@ -23,7 +23,7 @@ except ImportError:
 # ----------------------------------------------------------------------------
 # Config
 # ----------------------------------------------------------------------------
-DEFAULT_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")  # pin a model you have tested
+DEFAULT_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")  # pin a model you have tested
 MAX_FILE_MB = 15
 MAX_RETRIES = 4
 MAX_WORKERS = 4
