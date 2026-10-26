@@ -59,38 +59,18 @@ if uploaded_files and api_key:
                 file_bytes = uploaded_file.read()
                 
                 try:
-                    # Comprehensive fallback list across all current Gemini flash identifiers
-                    models_to_try = [
-                        "gemini-flash-latest",
-                        "gemini-3.8-flash",
-                        "gemini-3.6-flash",
-                        "gemini-2.5-flash",
-                        "gemini-2.0-flash",
-                        "gemini-1.5-flash"
-                    ]
-                    response = None
-                    model_success = False
-                    
-                    for model_name in models_to_try:
-                        try:
-                            response = client.models.generate_content(
-                                model=model_name,
-                                contents=[
-                                    types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
-                                    "Extract comprehensive invoice details from this document, including GSTINs, tax breakdowns, HSN codes, and dates."
-                                ],
-                                config=types.GenerateContentConfig(
-                                    response_mime_type="application/json",
-                                    response_schema=InvoiceSchema,
-                                ),
-                            )
-                            model_success = True
-                            break
-                        except Exception:
-                            continue
-                            
-                    if not model_success or not response:
-                        raise Exception("All model fallback attempts failed for this API key. Ensure your API key is valid and has model access.")
+                    # Explicitly using only gemini-3.8-flash
+                    response = client.models.generate_content(
+                        model="gemini-3.8-flash",
+                        contents=[
+                            types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
+                            "Extract comprehensive invoice details from this document, including GSTINs, tax breakdowns, HSN codes, and dates."
+                        ],
+                        config=types.GenerateContentConfig(
+                            response_mime_type="application/json",
+                            response_schema=InvoiceSchema,
+                        ),
+                    )
                     
                     parsed = InvoiceSchema.model_validate_json(response.text)
                     data_dict = parsed.model_dump()
