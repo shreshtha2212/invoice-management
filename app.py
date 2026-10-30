@@ -98,7 +98,15 @@ if uploaded_files and api_key and not enable_demo_mode:
             for i, uploaded_file in enumerate(uploaded_files):
                 status_text.text(f"Processing ({i+1}/{total_files}): {uploaded_file.name}...")
                 
-                mime_type = "application/pdf" if uploaded_file.name.lower().endswith(".pdf") else "image/png"
+                # Accurate Mime Type Detection for PDF, PNG, JPG/JPEG
+                file_name_lower = uploaded_file.name.lower()
+                if file_name_lower.endswith(".pdf"):
+                    mime_type = "application/pdf"
+                elif file_name_lower.endswith(".jpg") or file_name_lower.endswith(".jpeg"):
+                    mime_type = "image/jpeg"
+                else:
+                    mime_type = "image/png"
+                    
                 file_bytes = uploaded_file.read()
                 
                 try:
@@ -106,7 +114,11 @@ if uploaded_files and api_key and not enable_demo_mode:
                         model="gemini-3.8-flash",
                         contents=[
                             types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
-                            "Extract comprehensive invoice details from this document, including GSTINs, tax breakdowns, HSN codes, and dates."
+                            (
+                                "Extract comprehensive invoice details from this document accurately. "
+                                "Ensure taxable amounts, individual tax breakdowns (CGST, SGST, IGST), "
+                                "and the grand total align correctly with the document totals."
+                            )
                         ],
                         config=types.GenerateContentConfig(
                             response_mime_type="application/json",
@@ -161,7 +173,6 @@ if st.session_state["extracted_records"]:
     with col_right:
         st.subheader("✍️ Edit Extracted Fields")
         
-        # Smarter Reconciliation check with a forgiving buffer (up to 5.0 for rounding/extra fees)
         taxable = selected_record.get("taxable_amount") or 0.0
         cgst = selected_record.get("cgst_amount") or 0.0
         sgst = selected_record.get("sgst_amount") or 0.0
